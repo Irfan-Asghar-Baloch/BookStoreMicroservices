@@ -1,0 +1,15 @@
+[
+  {
+    "Name": "New Profile",
+    "Projects": [
+      {
+        "Path": "BookService\\BookService.csproj",
+        "Action": "Start"
+      },
+      {
+        "Path": "BookMvc\\BookMvc.csproj",
+        "Action": "Start"
+      }
+    ]
+  }
+]

@@ -1,0 +1,132 @@
+﻿@{
+    ViewData["Title"] = "Book Management";
+}
+
+<div class="container mt-4">
+
+    <h2>Book Management</h2>
+
+    <button id="btnLoadBooks" class="btn btn-primary">
+        Load Books
+    </button>
+
+    <hr />
+    <div class="row mb-3">
+
+        <div class="col-md-3">
+            <input type="text"
+                   id="txtTitle"
+                   class="form-control"
+                   placeholder="Title" />
+        </div>
+
+        <div class="col-md-3">
+            <input type="text"
+                   id="txtAuthor"
+                   class="form-control"
+                   placeholder="Author" />
+        </div>
+
+        <div class="col-md-2">
+            <input type="number"
+                   id="txtPrice"
+                   class="form-control"
+                   placeholder="Price" />
+        </div>
+
+        <div class="col-md-2">
+            <input type="number"
+                   id="txtStock"
+                   class="form-control"
+                   placeholder="Stock" />
+        </div>
+
+        <div class="col-md-2">
+            <button class="btn btn-success w-100"
+                    id="btnSaveBook">
+                Save
+            </button>
+        </div>
+
+    </div>
+    <table class="table table-bordered" id="tblBooks">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Price</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+        </tbody>
+
+    </table>
+
+</div>
+
+@section Scripts {
+
+    <script>
+        $(document).ready(function(){
+            console.log("Page Load");
+        });
+
+        $("#btnLoadBooks").click(function(){
+            $.ajax({
+                url: "https://localhost:7284/api/Book/GetAllBooks",
+                type: "GET",
+                success: function(response){
+                    console.log(response);
+
+                    $("#tblBooks tbody").empty();
+                        $.each(response.data, function (index, item) {
+                        $("#tblBooks tbody").append(`
+                            <tr>
+                                <td>${item.id}</td>
+                                <td>${item.title}</td>
+                                <td>${item.author}</td>
+                                <td>${item.price}</td>
+                                <td>${item.stock}</td>
+                                <td>${item.createdOn}</td>
+                                <td>
+                                <button class="btn btn-danger btnDelete" data-id="${item.id}">
+                                        Delete
+                                </button>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                },
+                error: function(error){
+                    console.log(error);
+                }
+            });
+        });
+
+        $("#btnSaveBook").click(function(){
+                    var book = {
+            Title: $("#txtTitle").val(),
+            Author: $("#txtAuthor").val(),
+            Price: $("#txtPrice").val(),
+            Stock: $("#txtStock").val()
+        };
+
+            $.ajax({
+                url: "https://localhost:7284/api/Book",
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify(book),
+                success: function(response){
+                    alert(response.message);
+                },
+                error: function(error){
+                    console.log(error);
+                }
+            });
+        })
+    </script>
+
+}
