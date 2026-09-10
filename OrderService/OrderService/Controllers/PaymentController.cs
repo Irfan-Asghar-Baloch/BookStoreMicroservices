@@ -7,6 +7,7 @@ using OrderService.Events;
 using OrderService.Interface;
 using OrderService.Interface.IOrderRepository;
 using Stripe;
+using System.Security.Claims;
 
 namespace OrderService.Controllers
 {
@@ -30,10 +31,10 @@ namespace OrderService.Controllers
         }
 
         [HttpPost("create-payment-intent")]
-        public async Task<IActionResult> CreatePaymentIntent(CreatePaymentRequest request)
+        public async Task<IActionResult> CreatePaymentIntent([FromQuery] int orderId)
         {
 
-            var paymentResponse = await _paymentService.CreatePaymentIntentAsync(request);
+            var paymentResponse = await _paymentService.CreatePaymentIntentAsync(orderId);
            // await _orderRepository.UpdateStatusAsync(request.OrderId, "Paid");
             Console.WriteLine("Order Updated Successfully");
             return Ok(paymentResponse);

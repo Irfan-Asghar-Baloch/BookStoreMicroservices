@@ -6,5 +6,6 @@ namespace OrderService.Interface
     {
         Task AddAsync(Payment payment);
         Task<Payment?> GetByPaymentIntentIdAsync(string paymentIntentId);
+        Task<Payment?> GetPaymentByOrderIdAsync(int orderId);
     }
 }

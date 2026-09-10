@@ -67,7 +67,7 @@ namespace NotificationService.Services
 
             Console.WriteLine(result);
 
-            response.EnsureSuccessStatusCode();
+           // response.EnsureSuccessStatusCode();
         }
         //public async Task SendAsync(string to, string message)
         //{

@@ -13,6 +13,14 @@ namespace OrderService.RepositoryImplementation
             _context = context;
         }
 
+        public async Task<List<Order>> GetByUserIdAsync(int userId)
+        {
+            return await _context.Orders
+                 .Include(x => x.OrderItems)
+                .Where(x => x.UserId == userId)
+                .ToListAsync();
+        }
+
         public async Task<List<Order>> GetAllAsync()
         {
             return await _context.Orders

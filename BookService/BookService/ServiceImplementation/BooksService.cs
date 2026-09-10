@@ -17,7 +17,7 @@ namespace BookService.ServiceImplementation
             _cache = cache;
         }
 
-        public async Task<ApiResponse<List<Book>>> GetAllAsync()
+        public async Task<ApiResponse> GetAllAsync()
         {
             const string cacheKey = "AllBooks";
             var cachedBooks = await _cache.GetStringAsync(cacheKey);
@@ -26,7 +26,7 @@ namespace BookService.ServiceImplementation
             {
                 var booksFromCache = JsonSerializer.Deserialize<List<Book>>(cachedBooks);
 
-                return new ApiResponse<List<Book>>
+                return new ApiResponse
                 {
                     Success = true,
                     Message = "Books fetched from Redis.",
@@ -37,10 +37,10 @@ namespace BookService.ServiceImplementation
             var books = await _bookRepository.GetAllAsync();
             var options = new DistributedCacheEntryOptions
             {
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5)
+                AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(0.1)
             };
             await _cache.SetAsync(cacheKey, System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(books), options);
-            return new ApiResponse<List<Book>>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Books fetched successfully.",
@@ -48,20 +48,20 @@ namespace BookService.ServiceImplementation
             };
         }
 
-        public async Task<ApiResponse<Book>> GetByIdAsync(int id)
+        public async Task<ApiResponse> GetByIdAsync(int id)
         {
             var book = await _bookRepository.GetByIdAsync(id);
 
             if (book == null)
             {
-                return new ApiResponse<Book>
+                return new ApiResponse
                 {
                     Success = false,
                     Message = "Book not found."
                 };
             }
 
-            return new ApiResponse<Book>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Book fetched successfully.",
@@ -69,7 +69,7 @@ namespace BookService.ServiceImplementation
             };
         }
 
-        public async Task<ApiResponse<string>> AddAsync(AddBookRequest request)
+        public async Task<ApiResponse> AddAsync(AddBookRequest request)
         {
             var book = new Book
             {
@@ -82,20 +82,20 @@ namespace BookService.ServiceImplementation
             await _bookRepository.AddAsync(book);
             await _bookRepository.SaveChangesAsync();
 
-            return new ApiResponse<string>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Book added successfully."
             };
         }
 
-        public async Task<ApiResponse<string>> UpdateAsync(UpdateBookRequest request)
+        public async Task<ApiResponse> UpdateAsync(UpdateBookRequest request)
         {
             var book = await _bookRepository.GetByIdAsync(request.Id);
 
             if (book == null)
             {
-                return new ApiResponse<string>
+                return new ApiResponse
                 {
                     Success = false,
                     Message = "Book not found."
@@ -110,20 +110,20 @@ namespace BookService.ServiceImplementation
             await _bookRepository.UpdateAsync(book);
             await _bookRepository.SaveChangesAsync();
 
-            return new ApiResponse<string>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Book updated successfully."
             };
         }
 
-        public async Task<ApiResponse<string>> DeleteAsync(int id)
+        public async Task<ApiResponse> DeleteAsync(int id)
         {
             var book = await _bookRepository.GetByIdAsync(id);
 
             if (book == null)
             {
-                return new ApiResponse<string>
+                return new ApiResponse
                 {
                     Success = false,
                     Message = "Book not found."
@@ -133,7 +133,7 @@ namespace BookService.ServiceImplementation
             await _bookRepository.DeleteAsync(book);
             await _bookRepository.SaveChangesAsync();
 
-            return new ApiResponse<string>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Book deleted successfully."

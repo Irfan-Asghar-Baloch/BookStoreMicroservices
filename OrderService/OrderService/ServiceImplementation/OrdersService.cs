@@ -19,7 +19,103 @@ namespace OrderService.ServiceImplementation
             _rabbitMQPublisher = rabbitMQPublisher;
         }
 
-        public async Task<ApiResponse<List<object>>> GetAllAsync()
+        public async Task<ApiResponse> GetMyOrdersAsync(int userId)
+        {
+            var orders = await _orderRepository.GetByUserIdAsync(userId);
+            var data = orders.Select(o => new
+            {
+                o.Id,
+                o.UserId,
+                o.TotalAmount,
+                o.Status,
+                o.CreatedOn,
+                Items = o.OrderItems.Select(i => new
+                {
+                    i.Id,
+                    i.BookId,
+                    i.Quantity,
+                    i.Price
+                })
+            }).ToList<object>();
+            return new ApiResponse
+            {
+                Success = true,
+                Message = "Orders fetched successfully.",
+                Data = data
+            };
+        }
+
+        public async Task<ApiResponse> CancelAsync(int id, int requestingUserId, bool canAccessAny)
+        {
+            var order = await _orderRepository.GetByIdAsync(id);
+            if (order == null)
+            {
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "Order not found."
+                };
+            }
+            if (!canAccessAny && order.UserId != requestingUserId)
+            {
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "You do not have permission to cancel this order."
+                };
+            }
+            if (order.Status == "Cancelled")
+            {
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "Order is already cancelled."
+                };
+            }
+            if(order.Status != "Pending")
+            {
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = $"Order cannot be cancelled — current status is '{order.Status}'. Paid orders need a refund instead."
+                };
+            }
+            await _orderRepository.UpdateStatusAsync(id, "Cancelled");
+            return new ApiResponse
+            {
+                Success = true,
+                Message = "Order cancelled successfully.",
+                Data = new { id, status = "Cancelled" }
+            };
+        }
+
+        public async Task<ApiResponse> GetByUserIdAsync(int userId)
+        {
+            var orders = await _orderRepository.GetByUserIdAsync(userId);
+            var data = orders.Select(o => new
+            {
+                o.Id,
+                o.UserId,
+                o.TotalAmount,
+                o.Status,
+                o.CreatedOn,
+                Items = o.OrderItems.Select(i => new
+                {
+                    i.Id,
+                    i.BookId,
+                    i.Quantity,
+                    i.Price
+                })
+            }).ToList<object>();
+            return new ApiResponse
+            {
+                Success = true,
+                Message = "Orders fetched successfully.",
+                Data = data
+            };
+        }
+
+        public async Task<ApiResponse> GetAllAsync()
         {
             var orders = await _orderRepository.GetAllAsync();
 
@@ -39,7 +135,7 @@ namespace OrderService.ServiceImplementation
                 })
             }).ToList<object>();
 
-            return new ApiResponse<List<object>>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Orders fetched successfully.",
@@ -47,16 +143,24 @@ namespace OrderService.ServiceImplementation
             };
         }
 
-        public async Task<ApiResponse<object>> GetByIdAsync(int id)
+        public async Task<ApiResponse> GetByIdAsync(int id, int requestingUserId, bool canAccessAny)
         {
             var order = await _orderRepository.GetByIdAsync(id);
 
             if (order == null)
             {
-                return new ApiResponse<object>
+                return new ApiResponse
                 {
                     Success = false,
                     Message = "Order not found."
+                };
+            }
+            if(!canAccessAny && order.UserId != requestingUserId)
+            {
+                return new ApiResponse
+                {
+                    Success = false,
+                    Message = "You do not have permission to access this order."
                 };
             }
 
@@ -76,7 +180,7 @@ namespace OrderService.ServiceImplementation
                 })
             };
 
-            return new ApiResponse<object>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Order fetched successfully.",
@@ -84,20 +188,16 @@ namespace OrderService.ServiceImplementation
             };
         }
 
-        public async Task<ApiResponse<string>> CreateAsync(CreateOrderRequest request)
+        public async Task<ApiResponse> CreateAsync(CreateOrderRequest request, int userId)
         {
             if (request.Items == null || request.Items.Count == 0)
             {
-                return new ApiResponse<string>
-                {
-                    Success = false,
-                    Message = "Order must contain at least one item."
-                };
+                return new ApiResponse { Success = false, Message = "Order must contain at least one item." };
             }
 
             var order = new Order
             {
-                UserId = request.UserId,
+                UserId = userId,
                 Status = "Pending"
             };
 
@@ -106,10 +206,11 @@ namespace OrderService.ServiceImplementation
             foreach (var item in request.Items)
             {
                 var book = await _bookApiService.GetBookByIdAsync(item.BookId);
+               Console.WriteLine($"DEBUG: BookId={book!.Price}");
 
                 if (book == null)
                 {
-                    return new ApiResponse<string>
+                    return new ApiResponse
                     {
                         Success = false,
                         Message = $"Book with Id {item.BookId} not found."
@@ -117,7 +218,7 @@ namespace OrderService.ServiceImplementation
                 }
                  if (item.Quantity <= 0)
                 {
-                    return new ApiResponse<string>
+                    return new ApiResponse
                     {
                         Success = false,
                         Message = "Quantity must be greater than zero."
@@ -146,7 +247,7 @@ namespace OrderService.ServiceImplementation
             };
             _rabbitMQPublisher.Publish(orderEvent);
 
-            return new ApiResponse<string>
+            return new ApiResponse
             {
                 Success = true,
                 Message = "Order created successfully."

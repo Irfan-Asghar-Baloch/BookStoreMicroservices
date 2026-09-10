@@ -5,14 +5,14 @@ namespace BookService.Interface.ServiceInterface
 {
     public interface IBookService
     {
-        Task<ApiResponse<List<Book>>> GetAllAsync();
+        Task<ApiResponse> GetAllAsync();
 
-        Task<ApiResponse<Book>> GetByIdAsync(int id);
+        Task<ApiResponse> GetByIdAsync(int id);
 
-        Task<ApiResponse<string>> AddAsync(AddBookRequest request);
+        Task<ApiResponse> AddAsync(AddBookRequest request);
 
-        Task<ApiResponse<string>> UpdateAsync(UpdateBookRequest request);
+        Task<ApiResponse> UpdateAsync(UpdateBookRequest request);
 
-        Task<ApiResponse<string>> DeleteAsync(int id);
+        Task<ApiResponse> DeleteAsync(int id);
     }
 }
